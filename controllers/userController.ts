@@ -2,6 +2,7 @@
 
 import { Request, Response } from 'express';
 import { PrismaClient } from '@prisma/client';
+import { validationResult } from 'express-validator';
 
 const prisma = new PrismaClient();
 
@@ -31,6 +32,12 @@ export default class UserController {
   }
 
   async createUser(req: Request, res: Response) {
+    // Validate request body
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
+    }
+
     const { name, email } = req.body;
     try {
       const newUser = await prisma.user.create({
@@ -38,11 +45,22 @@ export default class UserController {
       });
       res.status(201).json(newUser);
     } catch (error) {
-      res.status(500).json({ error: 'Internal server error' });
+      console.error('Error creating user:', error);
+      let errorMessage = 'Internal server error';
+      if (error instanceof Error) {
+        errorMessage += `: ${error.message}`;
+      }
+      res.status(500).json({ error: errorMessage });
     }
   }
 
   async updateUser(req: Request, res: Response) {
+    // Validate request body
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
+    }
+
     const userId = parseInt(req.params.id);
     const { name, email } = req.body;
     try {
@@ -52,6 +70,7 @@ export default class UserController {
       });
       res.json(updatedUser);
     } catch (error) {
+      console.error('Error updating user:', error);
       res.status(500).json({ error: 'Internal server error' });
     }
   }
