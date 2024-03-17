@@ -2,7 +2,7 @@
 
 import { Request, Response } from 'express';
 import { PrismaClient } from '@prisma/client';
-import { validationResult } from 'express-validator';
+import { UserRequestValidator } from '../requests/userRequest';
 
 const prisma = new PrismaClient();
 
@@ -32,10 +32,10 @@ export default class UserController {
   }
 
   async createUser(req: Request, res: Response) {
-    // Validate request body
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      return res.status(400).json({ errors: errors.array() });
+    const validation = UserRequestValidator.validateCreate(req);
+
+    if (validation.fails()) {
+      return res.status(400).json({ errors: validation.errors.all() });
     }
 
     const { name, email } = req.body;
@@ -55,10 +55,10 @@ export default class UserController {
   }
 
   async updateUser(req: Request, res: Response) {
-    // Validate request body
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      return res.status(400).json({ errors: errors.array() });
+    const validation = UserRequestValidator.validateUpdate(req);
+
+    if (validation.fails()) {
+      return res.status(400).json({ errors: validation.errors.all() });
     }
 
     const userId = parseInt(req.params.id);
