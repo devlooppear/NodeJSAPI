@@ -12,19 +12,35 @@ This project is a Node.js REST API with Docker. It uses PostgreSQL and Prisma fo
 ## Get Started
 
 1. Copy .env.example:
+
     ```
     cp .env.example .env
     ```
 2. Install the dependencies:
+
     ```
     npm install
     ```
 3. up docker environment:
+
     ```
     docker compose up
     ```
 
+- This script automatically runs the environment for production. For development, simply use:
+
+    ```
+    npm run dev
+    ```
+
+- You also will need uncomment the `docker-compose.yml`
+
 Now that everything is set up, you can access the API at `http://localhost:3000/api/`.
+
+## Auth
+
+To can access this routes you will need create a user and after take your token in personal_access_token. It use Jwt to auth.
+
 
 ## Migrations 
 

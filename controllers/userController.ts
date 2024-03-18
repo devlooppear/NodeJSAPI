@@ -1,10 +1,10 @@
-// controllers/userController.ts
-
 import { Request, Response } from 'express';
 import { PrismaClient } from '@prisma/client';
 import { UserRequestValidator } from '../requests/userRequest';
+import jwt from 'jsonwebtoken';
 
 const prisma = new PrismaClient();
+const JWT_SECRET = 'API_Web_Token';
 
 export default class UserController {
   async getAllUsers(req: Request, res: Response) {
@@ -32,18 +32,33 @@ export default class UserController {
   }
 
   async createUser(req: Request, res: Response) {
-    const validation = UserRequestValidator.validateCreate(req);
-
-    if (validation.fails()) {
-      return res.status(400).json({ errors: validation.errors.all() });
-    }
-
-    const { name, email } = req.body;
     try {
+      const validation = await UserRequestValidator.validateCreate(req);
+
+      if (validation.fails()) {
+        return res.status(400).json({ errors: validation.errors.all() });
+      }
+
+      const { name, email } = req.body;
+
+      // Create a new user
       const newUser = await prisma.user.create({
         data: { name, email },
       });
-      res.status(201).json(newUser);
+
+      // Generate a JWT for the access token
+      const accessToken = jwt.sign({ user_id: newUser.id }, JWT_SECRET);
+
+      // Create a personal access token for the user
+      await prisma.personalAccessToken.create({
+        data: {
+          token: accessToken,
+          user: { connect: { id: newUser.id } }, 
+        },
+      });
+
+      // Return the newly created user and access token
+      res.status(201).json({ user: newUser });
     } catch (error) {
       console.error('Error creating user:', error);
       let errorMessage = 'Internal server error';
