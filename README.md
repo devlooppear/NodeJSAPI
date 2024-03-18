@@ -35,7 +35,7 @@ This project is a Node.js REST API with Docker. It uses PostgreSQL and Prisma fo
 
 - You also will need uncomment the `docker-compose.yml`
 
-Now that everything is set up, you can access the API at `http://localhost:3000/api/`.
+Now that everything is set up, you can access the API at `http://localhost:8080/api/`.
 
 ## Auth
 

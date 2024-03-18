@@ -1,12 +1,12 @@
-import express, { Response } from 'express';
+import express from 'express';
 import UserController from '../controllers/userController';
-import { authenticateToken } from '../middleware/authenticateToken'; // Import the authentication middleware
+import { authenticateToken } from '../middleware/authenticateToken';
 
 const router = express.Router();
 const userController = new UserController();
 
 // Default route
-router.get('/', (res: Response) => {
+router.get('/', (req: express.Request, res: express.Response) => {
   res.json({ message: 'Welcome to the Node.js API!' });
 });
 
