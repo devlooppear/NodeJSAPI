@@ -9,14 +9,22 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     ports:
       - "5432:5432"
-  ## Just use this as a production environment, to development use just 'npm run start'
+  ## Use this just if need to the production environment
   # api:
-  #   build: .
-  #   ports:
-  #     - "8080:8080"
+  #   build:
+  #     context: .
+  #     dockerfile: Dockerfile.node
   #   depends_on:
   #     - db
   #   environment:
   #     DATABASE_URL: postgresql://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}/${DB_NAME}?schema=public
   #   env_file:
   #     - .env
+  # nginx:
+  #   build:
+  #     context: .
+  #     dockerfile: Dockerfile.nginx
+  #   ports:
+  #     - "8080:8080"
+  #   depends_on:
+  #     - api
