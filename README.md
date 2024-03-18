@@ -21,6 +21,7 @@ This project is a Node.js REST API with Docker. It uses PostgreSQL and Prisma fo
     ```
     npm install
     ```
+    
 3. up docker environment:
 
     ```

@@ -9,11 +9,11 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     ports:
       - "5432:5432"
-  ## Use this just if need to the production environment
+  ## This is for use in production
   # api:
   #   build:
   #     context: .
-  #     dockerfile: Dockerfile.node
+  #     dockerfile: ./.docker/node/Dockerfile.node
   #   depends_on:
   #     - db
   #   environment:
@@ -23,7 +23,7 @@ services:
   # nginx:
   #   build:
   #     context: .
-  #     dockerfile: Dockerfile.nginx
+  #     dockerfile: ./.docker/nginx/Dockerfile.nginx
   #   ports:
   #     - "8080:8080"
   #   depends_on:
