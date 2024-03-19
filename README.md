@@ -1,6 +1,12 @@
 # NodeJSAPI
 
-This project is a complete NodeJS REST API, dockernized, with postgres, migrations, controllers, reverse proxy, middleware to auth, tests, routes, and seeders
+This project is a comprehensive Node.js REST API, meticulously crafted with modern development practices. It is fully containerized with Docker, ensuring seamless deployment across environments. Leveraging PostgreSQL for data storage, the API employs robust migration strategies to manage database schema changes efficiently.
+
+The project architecture includes well-structured controllers to encapsulate business logic, while a reverse proxy powered by Nginx enhances performance and scalability. Middleware implementations provide secure authentication, guaranteeing that only authorized users access sensitive endpoints.
+
+Furthermore, a comprehensive suite of tests, including unit and integration tests, ensures the reliability and stability of the API. Defined routes offer clear navigation paths for client interactions, while seeders facilitate the initialization of essential data for development and testing environments.
+
+In summary, this Node.js REST API represents a sophisticated solution tailored for modern web development needs, combining best practices in containerization, database management, security, testing, and data seeding.
 
 ![Node.js](https://img.shields.io/badge/-Node.js-43853d?logo=node.js&logoColor=white)
 ![Docker](https://img.shields.io/badge/-Docker-2496ed?logo=docker&logoColor=white)
