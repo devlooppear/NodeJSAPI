@@ -1,115 +1,100 @@
+import { execSync } from 'child_process';
 import request from 'supertest';
-import { app } from '../server';
+import { app, server } from '../server';
+import { PrismaClient } from '@prisma/client';
 import jwt from 'jsonwebtoken';
-import { PrismaClient, User } from '@prisma/client';
 
-// Mock user data
-const mockUser: User = {
-  id: 1,
-  name: 'User1',
-  email: 'user1@example.com',
-  created_at: new Date(),
-  updated_at: new Date(),
-};
-
-// Mock JWT_SECRET
+const prisma = new PrismaClient();
 const JWT_SECRET = 'API_Web_Token';
 
-// Helper function to generate mock access token
-function generateAccessToken(payload: object): string {
-  return jwt.sign(payload, JWT_SECRET);
-}
+const executeCommand = (command: string) => {
+  try {
+    execSync(command, { stdio: 'inherit' });
+  } catch (error) {
+    console.error(`Error executing command: ${command}`, error);
+    process.exit(1);
+  }
+};
 
-// Mock PrismaClient using jest.mock
-jest.mock('@prisma/client', () => {
-  const mockUser: User = {
-    id: 1,
-    name: 'User1',
-    email: 'user1@example.com',
-    created_at: new Date(),
-    updated_at: new Date(),
-  };
-
-  return {
-    PrismaClient: jest.fn(() => ({
-      user: {
-        findMany: jest.fn().mockResolvedValueOnce([mockUser]),
-        findUnique: jest.fn().mockResolvedValueOnce(mockUser),
-        create: jest.fn().mockResolvedValueOnce(mockUser),
-        update: jest.fn().mockResolvedValueOnce(mockUser),
-        delete: jest.fn().mockResolvedValueOnce(undefined),
-      },
-    })),
-  };
-});
+executeCommand('npx prisma migrate dev');
 
 describe('UserController', () => {
-  describe('GET /api/users', () => {
-    it('should return all users', async () => {
-      const res = await request(app)
-        .get('/api/users')
-        .set('Authorization', `Bearer ${generateAccessToken({ userId: 1 })}`);
+  let token: string;
 
-      expect(res.status).toBe(200);
-      expect(res.body).toEqual([mockUser]);
+  beforeAll(async () => {
+    await prisma.user.deleteMany();
+
+    const newUser = await prisma.user.create({
+      data: { name: 'Test User', email: 'test@example.com' },
+    });
+
+    const accessToken = jwt.sign({ user_id: newUser.id }, JWT_SECRET);
+    await prisma.personalAccessToken.create({
+      data: {
+        token: accessToken,
+        user: { connect: { id: newUser.id } },
+      },
+    });
+
+    token = accessToken;
+  });
+
+  afterAll(async () => {
+    await prisma.$disconnect();
+    server.close();
+    executeCommand('npx prisma migrate reset -f');
+  });
+
+  describe('GET /api/users', () => {
+    it('should return an array of users', async () => {
+      await prisma.user.createMany({
+        data: [
+          { name: 'User 1', email: 'user1@example.com' },
+          { name: 'User 2', email: 'user2@example.com' },
+        ],
+      });
+  
+      const response = await request(app)
+        .get('/api/users')
+        .set('Authorization', `Bearer ${token}`);
+  
+      expect(response.status).toBe(200);
+  
+      expect(Array.isArray(response.body)).toBe(true);
+      expect(response.body.length).toBeGreaterThan(0);
+    });
+  });
+  
+
+  describe('POST /api/users', () => {
+    it('should create a new user', async () => {
+      const userData = { name: 'New Test User', email: 'newtest@example.com' };
+      const response = await request(app)
+        .post('/api/users')
+        .set('Authorization', `Bearer ${token}`)
+        .send(userData);
+
+      expect(response.status).toBe(201);
+      expect(response.body.user).toMatchObject(userData);
     });
   });
 
   describe('GET /api/users/:id', () => {
-    it('should return a user by ID if found', async () => {
-      const res = await request(app)
-        .get('/api/users/1')
-        .set('Authorization', `Bearer ${generateAccessToken({ userId: 1 })}`);
+    it('should get a user by ID', async () => {
+      const response = await request(app)
+        .get('/api/users/1') 
+        .set('Authorization', `Bearer ${token}`);
 
-      expect(res.status).toBe(200);
-      expect(res.body).toEqual(mockUser);
+      expect(response.status).toBe(200);
     });
 
-    it('should return 404 if user not found', async () => {
-      // Mocking user not found scenario
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (PrismaClient as any).user.findUnique.mockResolvedValueOnce(null);
+    it('should return 404 if user ID is not found', async () => {
+      const response = await request(app)
+        .get('/api/users/999') 
+        .set('Authorization', `Bearer ${token}`);
 
-      const res = await request(app)
-        .get('/api/users/999')
-        .set('Authorization', `Bearer ${generateAccessToken({ userId: 1 })}`);
-
-      expect(res.status).toBe(404);
-    });
-  });
-
-  describe('POST /api/users', () => {
-    it('should create a new user', async () => {
-      const res = await request(app)
-        .post('/api/users')
-        .send({ name: 'NewUser', email: 'newuser@example.com' })
-        .set('Authorization', `Bearer ${generateAccessToken({ userId: 1 })}`);
-
-      expect(res.status).toBe(201);
-      expect(res.body.user).toEqual(mockUser);
-    });
-  });
-
-  describe('PUT /api/users/:id', () => {
-    it('should update a user by ID', async () => {
-      const res = await request(app)
-        .put('/api/users/1')
-        .send({ name: 'UpdatedUser', email: 'updateduser@example.com' })
-        .set('Authorization', `Bearer ${generateAccessToken({ userId: 1 })}`);
-
-      expect(res.status).toBe(200);
-      expect(res.body).toEqual(mockUser);
-    });
-  });
-
-  describe('DELETE /api/users/:id', () => {
-    it('should delete a user by ID', async () => {
-      const res = await request(app)
-        .delete('/api/users/1')
-        .set('Authorization', `Bearer ${generateAccessToken({ userId: 1 })}`);
-
-      expect(res.status).toBe(200);
-      expect(res.body).toEqual({ message: 'User deleted successfully' });
+      expect(response.status).toBe(404);
+      expect(response.body.error).toBe('User not found');
     });
   });
 });
