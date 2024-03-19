@@ -9,7 +9,7 @@
     "lint": "eslint . --ext .js,.ts",
     "lint:fix": "eslint . --ext .js,.ts --fix",
     "dev": "nodemon server.ts",
-    "test": "jest"
+    "test": "jest --detectOpenHandles"
   },
   "keywords": [],
   "author": "",
@@ -28,6 +28,7 @@
   },
   "devDependencies": {
     "@faker-js/faker": "^8.4.1",
+    "@jest/globals": "^29.7.0",
     "@types/jest": "^29.5.12",
     "@types/jsonwebtoken": "^9.0.6",
     "@types/supertest": "^6.0.2",
