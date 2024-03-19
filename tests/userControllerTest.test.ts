@@ -16,10 +16,9 @@ const executeCommand = (command: string) => {
   }
 };
 
-executeCommand('npx prisma migrate dev');
-
 describe('UserController', () => {
   let token: string;
+  let userId: number;
 
   beforeAll(async () => {
     await prisma.user.deleteMany();
@@ -46,28 +45,33 @@ describe('UserController', () => {
   });
 
   describe('GET /api/users', () => {
-    it('should return an array of users', async () => {
+    it('should return an array of users with a valid token', async () => {
       await prisma.user.createMany({
         data: [
           { name: 'User 1', email: 'user1@example.com' },
           { name: 'User 2', email: 'user2@example.com' },
         ],
       });
-  
+
       const response = await request(app)
         .get('/api/users')
         .set('Authorization', `Bearer ${token}`);
-  
+
       expect(response.status).toBe(200);
-  
       expect(Array.isArray(response.body)).toBe(true);
       expect(response.body.length).toBeGreaterThan(0);
     });
+
+    it('should return an unauthorized status if no token is provided', async () => {
+      const response = await request(app)
+        .get('/api/users');
+
+      expect(response.status).toBe(401);
+    });
   });
-  
 
   describe('POST /api/users', () => {
-    it('should create a new user', async () => {
+    it('should create a new user with valid input data', async () => {
       const userData = { name: 'New Test User', email: 'newtest@example.com' };
       const response = await request(app)
         .post('/api/users')
@@ -80,21 +84,53 @@ describe('UserController', () => {
   });
 
   describe('GET /api/users/:id', () => {
-    it('should get a user by ID', async () => {
+    it('should retrieve a user by ID with a valid token', async () => {
       const response = await request(app)
-        .get('/api/users/1') 
+        .get('/api/users/1')
         .set('Authorization', `Bearer ${token}`);
 
       expect(response.status).toBe(200);
     });
 
-    it('should return 404 if user ID is not found', async () => {
+    it('should return a 404 error if the user ID is not found', async () => {
       const response = await request(app)
-        .get('/api/users/999') 
+        .get('/api/users/999')
         .set('Authorization', `Bearer ${token}`);
 
       expect(response.status).toBe(404);
       expect(response.body.error).toBe('User not found');
+    });
+
+    it('should return an unauthorized status if no token is provided', async () => {
+      const response = await request(app)
+        .get('/api/users/1');
+
+      expect(response.status).toBe(401);
+    });
+  });
+
+  describe('DELETE /api/users/:id', () => {
+
+    beforeEach(async () => {
+      const newUser = await prisma.user.create({
+        data: { name: 'Test User', email: `test${Math.random()}@example.com` },
+      });
+      userId = newUser.id;
+    });
+
+    afterEach(async () => {
+      if (userId) {
+        await prisma.user.delete({
+          where: { id: userId },
+        });
+      }
+    });
+
+    it('should return a 401 status if no token is provided', async () => {
+      const response = await request(app)
+        .delete(`/api/users/${userId}`);
+
+      expect(response.status).toBe(401);
     });
   });
 });

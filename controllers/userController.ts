@@ -12,7 +12,7 @@ export default class UserController {
       const users = await prisma.user.findMany();
       res.json(users);
     } catch (error) {
-      res.status(500).json({ error: 'Internal server error' });
+      res.status(500).json({ error: 'Internal server error: ' + error});
     }
   }
 
@@ -27,7 +27,7 @@ export default class UserController {
       }
       res.json(user);
     } catch (error) {
-      res.status(500).json({ error: 'Internal server error' });
+      res.status(500).json({ error: 'Internal server error: ' + error});
     }
   }
 
@@ -53,7 +53,7 @@ export default class UserController {
       await prisma.personalAccessToken.create({
         data: {
           token: accessToken,
-          user: { connect: { id: newUser.id } }, 
+          user: { connect: { id: newUser.id } },
         },
       });
 
@@ -86,19 +86,27 @@ export default class UserController {
       res.json(updatedUser);
     } catch (error) {
       console.error('Error updating user:', error);
-      res.status(500).json({ error: 'Internal server error' });
+      res.status(500).json({ error: 'Internal server error: ' + error});
     }
   }
 
   async deleteUser(req: Request, res: Response) {
     const userId = parseInt(req.params.id);
     try {
+      // Delete associated personal access tokens first
+      await prisma.personalAccessToken.deleteMany({
+        where: { user_id: userId },
+      });
+
+      // Then delete the user
       await prisma.user.delete({
         where: { id: userId },
       });
+
       res.json({ message: 'User deleted successfully' });
     } catch (error) {
-      res.status(500).json({ error: 'Internal server error' });
+      console.error('Error deleting user:', error);
+      res.status(500).json({ error: 'Internal server error: ' + error });
     }
   }
 }
